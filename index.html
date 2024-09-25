@@ -37,7 +37,7 @@
             font-size: 1rem;
         }
 
-        input, button {
+        select, input, button {
             width: 100%;
             padding: 10px;
             margin-bottom: 10px;
@@ -79,21 +79,13 @@
             font-size: 1.2rem;
         }
 
-        .admin-section button {
-            background-color: #dc3545;
-        }
-
-        .admin-section button:hover {
-            background-color: #c82333;
-        }
-
         /* Responsividade */
         @media (max-width: 600px) {
             h1 {
                 font-size: 1.2rem;
             }
 
-            label, input, button {
+            label, select, input, button {
                 font-size: 0.9rem;
             }
 
@@ -113,14 +105,30 @@
 
         <!-- Formulário de Reserva -->
         <div class="form-group">
-            <label for="name">Nome do Morador</label>
-            <input type="text" id="name" placeholder="Seu nome" required>
+            <label for="apto">Apto</label>
+            <select id="apto">
+                <option value="31">31</option>
+                <option value="32">32</option>
+                <option value="33">33</option>
+                <option value="41">41</option>
+                <option value="42">42</option>
+                <option value="43">43</option>
+                <option value="51">51</option>
+                <option value="52">52</option>
+                <option value="53">53</option>
+                <option value="61">61</option>
+                <option value="62">62</option>
+                <option value="63">63</option>
+            </select>
         </div>
         <div class="form-group">
             <label for="date">Data da Reserva</label>
             <input type="date" id="date" required>
         </div>
         <button id="reserveBtn">Fazer Reserva</button>
+
+        <!-- Mensagem de status -->
+        <div id="statusMessage"></div>
 
         <!-- Lista de Reservas -->
         <div class="reservations">
@@ -136,59 +144,68 @@
     </div>
 
     <script>
-        // Armazena as reservas no LocalStorage
         const reserveBtn = document.getElementById('reserveBtn');
+        const statusMessage = document.getElementById('statusMessage');
         const reservationList = document.getElementById('reservationList');
-        const clearAllBtn = document.getElementById('clearAllBtn');
 
-        // Carregar reservas ao carregar a página
-        document.addEventListener('DOMContentLoaded', loadReservations);
+        const googleScriptURL = 'https://script.google.com/macros/s/AKfycbzZBUjXIAUC-XhEC13b17ol9-7ZBdCFb_gbSnFoxjxpAuXfzUL0LivHLHZGfzAAZAcusw/exec'; // Substitua pelo seu URL do Google Apps Script
 
         // Função para adicionar uma nova reserva
         reserveBtn.addEventListener('click', () => {
-            const name = document.getElementById('name').value;
+            const apto = document.getElementById('apto').value;
             const date = document.getElementById('date').value;
 
-            if (name === "" || date === "") {
-                alert('Por favor, preencha todos os campos.');
+            if (!date) {
+                alert('Por favor, selecione uma data.');
                 return;
             }
 
-            const newReservation = {
-                name,
-                date
-            };
-
-            let reservations = JSON.parse(localStorage.getItem('reservations')) || [];
-            reservations.push(newReservation);
-            localStorage.setItem('reservations', JSON.stringify(reservations));
-
-            alert('Reserva confirmada!');
-            loadReservations();
+            // Envia os dados para o Google Apps Script
+            fetch(googleScriptURL, {
+                method: 'POST',
+                body: JSON.stringify({ apto, date }),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    statusMessage.textContent = 'Reserva confirmada!';
+                    statusMessage.style.color = 'green';
+                    loadReservations(); // Atualiza a lista de reservas
+                } else {
+                    statusMessage.textContent = data.message;
+                    statusMessage.style.color = 'red';
+                }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+            });
         });
 
         // Função para carregar todas as reservas
         function loadReservations() {
-            const reservations = JSON.parse(localStorage.getItem('reservations')) || [];
-
-            reservationList.innerHTML = ""; // Limpa a lista
-            reservations.forEach((reservation, index) => {
-                const reservationDiv = document.createElement('div');
-                reservationDiv.classList.add('reservation');
-                reservationDiv.innerHTML = `
-                    <strong>${reservation.name}</strong> reservou para o dia <strong>${reservation.date}</strong>
-                `;
-                reservationList.appendChild(reservationDiv);
+            fetch(googleScriptURL)
+            .then(response => response.json())
+            .then(data => {
+                reservationList.innerHTML = ''; // Limpa a lista
+                data.forEach(reservation => {
+                    const reservationDiv = document.createElement('div');
+                    reservationDiv.classList.add('reservation');
+                    reservationDiv.innerHTML = `
+                        <strong>Apto ${reservation[0]}</strong> reservou para o dia <strong>${reservation[1]}</strong>
+                    `;
+                    reservationList.appendChild(reservationDiv);
+                });
+            })
+            .catch(error => {
+                console.error('Erro ao carregar reservas:', error);
             });
         }
 
-        // Função para limpar todas as reservas (somente o síndico pode fazer isso)
-        clearAllBtn.addEventListener('click', () => {
-            if (confirm('Você tem certeza que deseja limpar todas as reservas?')) {
-                localStorage.removeItem('reservations');
-                loadReservations();
-            }
-        });
+        // Carrega as reservas ao carregar a página
+        document.addEventListener('DOMContentLoaded', loadReservations);
     </script>
 </body>
 </html>
