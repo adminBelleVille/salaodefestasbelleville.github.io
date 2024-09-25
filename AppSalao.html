@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Reserva de Salão de Festas</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 1.5rem;
+        }
+
+        .container {
+            max-width: 100%;
+            width: 100%;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 1rem;
+        }
+
+        input, button {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        button {
+            background-color: #28a745;
+            color: white;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #218838;
+        }
+
+        .reservations {
+            margin-top: 20px;
+        }
+
+        .reservation {
+            padding: 10px;
+            background-color: #e9ecef;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+
+        .admin-section {
+            margin-top: 20px;
+            padding: 20px;
+            border-top: 2px solid #ddd;
+        }
+
+        .admin-section h2 {
+            color: #007bff;
+            font-size: 1.2rem;
+        }
+
+        .admin-section button {
+            background-color: #dc3545;
+        }
+
+        .admin-section button:hover {
+            background-color: #c82333;
+        }
+
+        /* Responsividade */
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 1.2rem;
+            }
+
+            label, input, button {
+                font-size: 0.9rem;
+            }
+
+            .reservation {
+                font-size: 0.8rem;
+            }
+
+            .admin-section h2 {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Reserva de Salão de Festas</h1>
+
+        <!-- Formulário de Reserva -->
+        <div class="form-group">
+            <label for="name">Nome do Morador</label>
+            <input type="text" id="name" placeholder="Seu nome" required>
+        </div>
+        <div class="form-group">
+            <label for="date">Data da Reserva</label>
+            <input type="date" id="date" required>
+        </div>
+        <button id="reserveBtn">Fazer Reserva</button>
+
+        <!-- Lista de Reservas -->
+        <div class="reservations">
+            <h2>Reservas Confirmadas</h2>
+            <div id="reservationList"></div>
+        </div>
+
+        <!-- Área de Administração para Síndico -->
+        <div class="admin-section">
+            <h2>Área de Administração do Síndico</h2>
+            <button id="clearAllBtn">Limpar Todas Reservas</button>
+        </div>
+    </div>
+
+    <script>
+        // Armazena as reservas no LocalStorage
+        const reserveBtn = document.getElementById('reserveBtn');
+        const reservationList = document.getElementById('reservationList');
+        const clearAllBtn = document.getElementById('clearAllBtn');
+
+        // Carregar reservas ao carregar a página
+        document.addEventListener('DOMContentLoaded', loadReservations);
+
+        // Função para adicionar uma nova reserva
+        reserveBtn.addEventListener('click', () => {
+            const name = document.getElementById('name').value;
+            const date = document.getElementById('date').value;
+
+            if (name === "" || date === "") {
+                alert('Por favor, preencha todos os campos.');
+                return;
+            }
+
+            const newReservation = {
+                name,
+                date
+            };
+
+            let reservations = JSON.parse(localStorage.getItem('reservations')) || [];
+            reservations.push(newReservation);
+            localStorage.setItem('reservations', JSON.stringify(reservations));
+
+            alert('Reserva confirmada!');
+            loadReservations();
+        });
+
+        // Função para carregar todas as reservas
+        function loadReservations() {
+            const reservations = JSON.parse(localStorage.getItem('reservations')) || [];
+
+            reservationList.innerHTML = ""; // Limpa a lista
+            reservations.forEach((reservation, index) => {
+                const reservationDiv = document.createElement('div');
+                reservationDiv.classList.add('reservation');
+                reservationDiv.innerHTML = `
+                    <strong>${reservation.name}</strong> reservou para o dia <strong>${reservation.date}</strong>
+                `;
+                reservationList.appendChild(reservationDiv);
+            });
+        }
+
+        // Função para limpar todas as reservas (somente o síndico pode fazer isso)
+        clearAllBtn.addEventListener('click', () => {
+            if (confirm('Você tem certeza que deseja limpar todas as reservas?')) {
+                localStorage.removeItem('reservations');
+                loadReservations();
+            }
+        });
+    </script>
+</body>
+</html>
